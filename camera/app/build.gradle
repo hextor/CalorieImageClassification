@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.example.monique.camera"
-        minSdkVersion 15
+        minSdkVersion 28
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -21,6 +21,9 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    aaptOptions{
+        noCompress "tflite"
+    }
     externalNativeBuild {
         cmake {
             path "CMakeLists.txt"
@@ -35,4 +38,6 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+//    implementation 'org.tensorflow:tensorflow-android:+'
+    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
 }
