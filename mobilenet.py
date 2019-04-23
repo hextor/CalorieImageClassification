@@ -22,8 +22,9 @@ def prepare_image(file):
     img_array = image.img_to_array(img)
     img_array_expanded_dims = np.expand_dims(img_array, axis=0)
     return keras.applications.mobilenet_v2.preprocess_input(img_array_expanded_dims)
-
-preprocessed_image = prepare_image('images/breakfast_burrito/1211.jpg')
+# will display image
+Image.open('burrito.jpg').show()
+preprocessed_image = prepare_image('burrito.jpg')
 predictions = mobile.predict(preprocessed_image)
 results = imagenet_utils.decode_predictions(predictions)
 print(results)
