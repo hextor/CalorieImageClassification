@@ -10,6 +10,15 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONObject;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -59,37 +68,48 @@ public class MainActivity extends AppCompatActivity {
                 final List<Classifier.Recognition> results = classifier.recognizeImage(imageBitmap);
                 final TextView displayResults = findViewById(R.id.calorieTextView);
                 // run in debug mode and hover over this line to see data details.
-                Log.d("Results for image", results.toString());
-                // GET THE FIRST KEYWORD -- and set it with our formatted string inside res/values/strings.xml
+                Log.d("Results for image", results.toString());  // GET THE FIRST KEYWORD -- results.get(0).getTitle()
+
+
+                // Instantiate the RequestQueue.
+                RequestQueue queue = Volley.newRequestQueue(this);
+
+                // here's the key you will need to use.
+                String consumerKey = "f1f2b91b71294a4f890c4068cf043d44";
+                // You will need to construct the url according to the documentation
+                String url ="use the fatsecret api url here";
+
+                // Request a json response from the provided URL.
+                JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // if all good you can set the values to a variable or just display the results directly.
+                    }
+                    }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // Handle a generic error with a generic response
+                    }
+                });
+
+                // Add the request to the RequestQueue.
+                queue.add(jsonRequest);
+
+
+                // this runs a thread so there's no lag on updating UI
                 runOnUiThread(
                         new Runnable() {
                             @Override
                             public void run() {
+                                // setting it to a proper percentage for display
                                 String confidence = String.format(Locale.ENGLISH, "%f%%", results.get(0).getConfidence() * 100);
+                                // set it with our classification results with a formatted string inside res/values/strings.xml
                                 displayResults.setText(getString(R.string.item_guess, results.get(0).getTitle(), confidence));
-                                // THEN MAKE THE URL REQUEST
+                                // create new textViews and set text for the information from api call.
                             }
                         }
                 );
-//                // Instantiate the RequestQueue.
-//                RequestQueue queue = Volley.newRequestQueue(this);
-//                String url ="http://www.google.com";
-//                // Request a string response from the provided URL.
-//                StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-//                        new Response.Listener<String>() {
-//                            @Override
-//                            public void onResponse(String response) {
-//                                // Display the first 500 characters of the response string.
-//                              //  textView.setText("Response is: "+ response.substring(0,500));
-//                            }
-//                        }, new Response.ErrorListener() {
-//                    @Override
-//                    public void onErrorResponse(VolleyError error) {
-//                        //textView.setText("That didn't work!");
-//                    }
-//                });
-//                // Add the request to the RequestQueue.
-//                queue.add(stringRequest);
+//
             }
         }
     }
