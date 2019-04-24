@@ -72,15 +72,22 @@ public class MainActivity extends AppCompatActivity {
 
                 // Instantiate the RequestQueue.
                 RequestQueue queue = Volley.newRequestQueue(this);
+
+                // Examples of how to use the api fields.
+                // Need to create the urls to be used in the JsonObjectRequest functions
                 // Request a json response from the provided URL.
                 String url = api.searchFoodItem("apple");
+                // This ID is for apple.
+                String descriptionUrl = api.getFoodItem("35718");
+
+
                 Log.d("API URL", url);
                 JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         // if all good you can set the values to a variable or just display the results directly.
                         Log.d("Response from FatSecret", response.toString());
-                        displayResults.setText(response.toString());
+//                        displayResults.setText(response.toString());
 
                     }
                     }, new Response.ErrorListener() {
@@ -90,9 +97,26 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("Error on Volley response", error.toString());
                     }
                 });
+                queue.add(jsonRequest);
+
+                JsonObjectRequest jsonRequest2 = new JsonObjectRequest(Request.Method.GET, descriptionUrl, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // if all good you can set the values to a variable or just display the results directly.
+                        Log.d("Response from FatSecret", response.toString());
+                        displayResults.setText(response.toString());
+
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // Handle a generic error with a generic response
+                        Log.d("Error on Volley response", error.toString());
+                    }
+                });
 
                 // Add the request to the RequestQueue.
-                queue.add(jsonRequest);
+                queue.add(jsonRequest2);
 
 
                 // this runs a thread so there's no lag on updating UI
