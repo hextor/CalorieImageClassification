@@ -20,13 +20,11 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONObject;
 
 import java.util.List;
-import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
-
     private ImageView mimageView;
-    private static final int REQUEST_IMAGE_CAPTURE= 1;
+    private static final int REQUEST_IMAGE_CAPTURE= 101;
     private Runnable recognizer;
     private Classifier classifier;
     // Used to load the 'native-lib' library on application startup.
@@ -70,25 +68,26 @@ public class MainActivity extends AppCompatActivity {
                 // run in debug mode and hover over this line to see data details.
                 Log.d("Results for image", results.toString());  // GET THE FIRST KEYWORD -- results.get(0).getTitle()
 
+                GenerateAPI api = new GenerateAPI();
 
                 // Instantiate the RequestQueue.
                 RequestQueue queue = Volley.newRequestQueue(this);
-
-                // here's the key you will need to use.
-                String consumerKey = "f1f2b91b71294a4f890c4068cf043d44";
-                // You will need to construct the url according to the documentation
-                String url ="use the fatsecret api url here";
-
                 // Request a json response from the provided URL.
+                String url = api.searchFoodItem("apple");
+                Log.d("API URL", url);
                 JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         // if all good you can set the values to a variable or just display the results directly.
+                        Log.d("Response from FatSecret", response.toString());
+                        displayResults.setText(response.toString());
+
                     }
                     }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // Handle a generic error with a generic response
+                        Log.d("Error on Volley response", error.toString());
                     }
                 });
 
@@ -97,18 +96,18 @@ public class MainActivity extends AppCompatActivity {
 
 
                 // this runs a thread so there's no lag on updating UI
-                runOnUiThread(
-                        new Runnable() {
-                            @Override
-                            public void run() {
-                                // setting it to a proper percentage for display
-                                String confidence = String.format(Locale.ENGLISH, "%f%%", results.get(0).getConfidence() * 100);
-                                // set it with our classification results with a formatted string inside res/values/strings.xml
-                                displayResults.setText(getString(R.string.item_guess, results.get(0).getTitle(), confidence));
-                                // create new textViews and set text for the information from api call.
-                            }
-                        }
-                );
+//                runOnUiThread(
+//                        new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                // setting it to a proper percentage for display
+//                                String confidence = String.format(Locale.ENGLISH, "%f%%", results.get(0).getConfidence() * 100);
+//                                // set it with our classification results with a formatted string inside res/values/strings.xml
+//                                displayResults.setText(getString(R.string.item_guess, results.get(0).getTitle(), confidence));
+//                                // create new textViews and set text for the information from api call.
+//                            }
+//                        }
+//                );
 //
             }
         }
