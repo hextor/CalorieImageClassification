@@ -10,17 +10,29 @@ creating authentication for api use according to companies design
  */
 public class GenerateAPI {
     private String consumer_key = "f1f2b91b71294a4f890c4068cf043d44";
-    private String private_key = "";
+    private String private_key = ""; // not sure if we need it yet
     private String http_method = "GET";
     private String request_url = "https://platform.fatsecret.com/rest/server.api";
     // if api uses any of these, be sure that it includes them in this order
     private String food_id = "";
-    private String method = "";
-    private String nonce = "";
+    private String method = ""; // should be food.search or food.get
+    private String nonce = ""; // unique string to be passed
     private String signature_method = "HMAC-SHA1";
     private String signature = "";
     private String timestamp = "";
     private String version = "1.0";
+
+    public String encodeString(String str) {
+
+        String url = "";
+        try{
+            url = URLEncoder.encode(str, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e){
+            Log.d("Encoding went wrong", e.toString());
+        }
+        return url;
+    }
 
     public String generateTimestamp(){
         return Long.toString(System.currentTimeMillis() / 1000 );
@@ -45,20 +57,10 @@ public class GenerateAPI {
         return sb.toString();
     }
 
-    public String encodeString(String str) {
-
-        String url = "";
-        try{
-           url = URLEncoder.encode(str, "UTF-8");
-        }
-        catch (UnsupportedEncodingException e){
-            Log.d("Encoding went wrong", e.toString());
-        }
-        return url;
-    }
-
     public void generateSignature(){
         this.timestamp = generateTimestamp();
+        String key = String.format("%s&", consumer_key);
+
 
     }
 
