@@ -1,10 +1,8 @@
 package com.example.monique.camera;
 
+import android.net.Uri;
 import android.util.Base64;
 import android.util.Log;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -17,7 +15,7 @@ public class GenerateAPI {
 
 
     private String consumer_key = "f1f2b91b71294a4f890c4068cf043d44";
-    private String private_key = ""; // not sure if we need it yet
+    private String private_key = "b5756c64465d41ea99aacd574afbdc95";
     private String http_method = "GET";
     private String request_url = "https://platform.fatsecret.com/rest/server.api";
     // if api uses any of these, be sure that it includes them in this order
@@ -37,9 +35,10 @@ public class GenerateAPI {
 
         String url = "";
         try{
-            url = URLEncoder.encode(str, "UTF-8");
+            url = Uri.encode(str, "UTF-8").trim();
+//            url = URLEncoder.encode(str, "UTF-8");
         }
-        catch (UnsupportedEncodingException e){
+        catch (Exception e){
             Log.d("Encoding went wrong", e.toString());
         }
         return url;
@@ -52,16 +51,20 @@ public class GenerateAPI {
     public String generateAuthParameters() {
 
         StringBuilder sb = new StringBuilder();
+        sb.append(String.format("format=%s&", this.format));
+        sb.append(String.format("method=%s&", this.method));
         sb.append(String.format("oauth_consumer_key=%s&", this.consumer_key));
-        sb.append(String.format("oauth_nonce=%s&", this.timestamp+"hmm"));
+        sb.append(String.format("oauth_nonce=%s&", this.timestamp+"okay"));
+        sb.append("oauth_signature_method=HMAC-SHA1&");
         sb.append(String.format("oauth_timestamp=%s&", this.timestamp));
-        sb.append(String.format("oauth_version=%s", version));
+        sb.append(String.format("oauth_version=%s&", version));
+        sb.append(String.format("search_expression=%s", this.searchExpression));
         return sb.toString();
     }
 
     public String generateSignature(){
-        // set up key with consumer_key `&` secret_key (may not be necessary)
-        String key = String.format("%s&b5756c64465d41ea99aacd574afbdc95", consumer_key);
+        // set up key with private_key + `&`
+        String key = String.format("%s&", this.private_key);
         // set up base key <HTTP Method>&<Request URL>&<Normalized Parameters>
         String base = String.format("%s&%s&%s", http_method, encodeString(request_url), encodeString(generateAuthParameters()));
 
@@ -76,25 +79,28 @@ public class GenerateAPI {
             Log.d("error on key algo: ", e.toString());
         }
 
-        byte[] result = Base64.encode(digest, 0);
-        Log.d("new encoded base signature", new String(result));
-        return encodeString(new String(result));
+//        byte[] result = Base64.encode(digest, 0);
+        String result = Uri.encode(Base64.encodeToString(digest, 0).trim());
+        Log.d("new encoded base signature", result);
+        return result;
     }
 
     // now we construct a url for searching for food item by search term
     public String searchFoodItem(String searchTerm){
         this.timestamp = generateTimestamp();
+        this.searchExpression = searchTerm;
+        this.method = "foods.search";
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("%s?", this.request_url));
         sb.append(String.format("format=%s&", this.format));
-        sb.append(String.format("method=%s&", "food.search"));
+        sb.append(String.format("method=%s&", this.method));
         sb.append(String.format("oauth_consumer_key=%s&", this.consumer_key));
-        sb.append(String.format("oauth_nonce=%s&", this.timestamp + "hmm"));
+        sb.append(String.format("oauth_nonce=%s&", this.timestamp + "okay"));
         sb.append(String.format("oauth_signature=%s&", this.generateSignature()));
         sb.append(String.format("oauth_signature_method=HMAC-SHA1&"));
         sb.append(String.format("oauth_timestamp=%s&", this.timestamp));
         sb.append(String.format("oauth_version=%s&", this.version));
-        sb.append(String.format("search_expression=%s", searchTerm));
+        sb.append(String.format("search_expression=%s", this.searchExpression));
         Log.d("URL being sent over", sb.toString());
         return sb.toString();
     }
