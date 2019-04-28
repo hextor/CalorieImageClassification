@@ -9,12 +9,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-
+    ImageView imgForOnline;
     private ImageView mimageView;
     private static final int REQUEST_IMAGE_CAPTURE= 101;
     private Runnable recognizer;
@@ -58,6 +59,11 @@ public class MainActivity extends AppCompatActivity {
                 final List<Classifier.Recognition> results = classifier.recognizeImage(imageBitmap);
                 // run in debug mode and hover over this line to see data details.
                 Log.d("Results for image", results.toString());
+
+              /* TextView textout;
+                textout = (TextView) findViewById(R.id.txtOutput);
+                textout.setText(results.indexOf(0));        */
+
             }
         }
     }
