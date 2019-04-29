@@ -36,7 +36,6 @@ public class GenerateAPI {
         String url = "";
         try{
             url = Uri.encode(str, "UTF-8").trim();
-//            url = URLEncoder.encode(str, "UTF-8");
         }
         catch (Exception e){
             Log.d("Encoding went wrong", e.toString());
@@ -48,7 +47,7 @@ public class GenerateAPI {
         return Long.toString(System.currentTimeMillis() / 1000 );
     }
 
-    public String generateAuthParameters() {
+    public String generateSearchAuthParameters() {
 
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("format=%s&", this.format));
@@ -62,12 +61,32 @@ public class GenerateAPI {
         return sb.toString();
     }
 
+    public String generateGetAuthParameters(){
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("food_id=%s&", this.food_id));
+        sb.append(String.format("format=%s&", this.format));
+        sb.append(String.format("method=%s&", this.method));
+        sb.append(String.format("oauth_consumer_key=%s&", this.consumer_key));
+        sb.append(String.format("oauth_nonce=%s&", this.timestamp+"okay"));
+        sb.append("oauth_signature_method=HMAC-SHA1&");
+        sb.append(String.format("oauth_timestamp=%s&", this.timestamp));
+        sb.append(String.format("oauth_version=%s", version));
+        return sb.toString();
+    }
+
     public String generateSignature(){
         // set up key with private_key + `&`
         String key = String.format("%s&", this.private_key);
         // set up base key <HTTP Method>&<Request URL>&<Normalized Parameters>
-        String base = String.format("%s&%s&%s", http_method, encodeString(request_url), encodeString(generateAuthParameters()));
+        String base = "";
+        if (this.method.compareToIgnoreCase("foods.search") == 0){
+            base = String.format("%s&%s&%s", http_method, encodeString(request_url), encodeString(generateSearchAuthParameters()));
+        }
+        else if (this.method.compareToIgnoreCase("food.get") == 0){
+            base = String.format("%s&%s&%s", http_method, encodeString(request_url), encodeString(generateGetAuthParameters()));
+        }
 
+        // Creating our hmac-sha1 encryption
         Mac mac;
         byte[] digest = null;
         try{
@@ -79,8 +98,7 @@ public class GenerateAPI {
             Log.d("error on key algo: ", e.toString());
         }
 
-//        byte[] result = Base64.encode(digest, 0);
-        String result = Uri.encode(Base64.encodeToString(digest, 0).trim());
+        String result = encodeString(Base64.encodeToString(digest, 0).trim());
         Log.d("new encoded base signature", result);
         return result;
     }
@@ -100,8 +118,27 @@ public class GenerateAPI {
         sb.append(String.format("oauth_signature_method=HMAC-SHA1&"));
         sb.append(String.format("oauth_timestamp=%s&", this.timestamp));
         sb.append(String.format("oauth_version=%s&", this.version));
-        sb.append(String.format("search_expression=%s", this.searchExpression));
+        sb.append(String.format("search_expression=%s", encodeString(this.searchExpression))); // encode search term in-case there are spaces
         Log.d("URL being sent over", sb.toString());
+        return sb.toString();
+    }
+
+    public String getFoodItem(String foodId){
+        StringBuilder sb = new StringBuilder();
+        this.timestamp = generateTimestamp();
+        this.method = "food.get";
+        this.food_id = foodId;
+        sb.append(String.format("%s?", this.request_url));
+        sb.append(String.format("food_id=%s&", this.food_id));
+        sb.append(String.format("format=%s&", this.format));
+        sb.append(String.format("method=%s&", this.method));
+        sb.append(String.format("oauth_consumer_key=%s&", this.consumer_key));
+        sb.append(String.format("oauth_nonce=%s&", this.timestamp + "okay"));
+        sb.append(String.format("oauth_signature=%s&", this.generateSignature()));
+        sb.append(String.format("oauth_signature_method=HMAC-SHA1&"));
+        sb.append(String.format("oauth_timestamp=%s&", this.timestamp));
+        sb.append(String.format("oauth_version=%s", this.version));
+
         return sb.toString();
     }
 

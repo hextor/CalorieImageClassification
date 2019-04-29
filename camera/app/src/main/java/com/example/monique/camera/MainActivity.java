@@ -31,7 +31,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_CAPTURE= 101;
     private Runnable recognizer;
     private Classifier classifier;
-    private String mainFoodName = "";
+    private String mainFoodID = "";
+    private String allNutrition = "";
     private Map<String, String> foodVariables = new HashMap<String, String>() {
         {
             put("measurement_description", "Measurement Description: ");
@@ -100,9 +101,9 @@ public class MainActivity extends AppCompatActivity {
                 // Instantiate the RequestQueue.
                 RequestQueue queue = Volley.newRequestQueue(this);
                 // Request a json response from the provided URL.
-                String url = api.generateSignature();
+                String url = api.searchFoodItem(results.get(0).getTitle());
                 Log.d("API URL", url);
-                JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                final JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         // if all good you can set the values to a variable or just display the results directly.
@@ -110,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
                         displayResults.setText(response.toString());
 
                         try {
-                            mainFoodName = response.getJSONArray("foods").getJSONObject(0).getString("food_name");
+                            mainFoodID = response.getJSONArray("foods").getJSONObject(0).getString("food_id");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -120,10 +121,13 @@ public class MainActivity extends AppCompatActivity {
                     public void onErrorResponse(VolleyError error) {
                         // Handle a generic error with a generic response
                         Log.d("Error on Volley response", error.toString());
+
                     }
                 });
 
-                url = api.searchFoodItem(mainFoodName);
+                queue.add(jsonRequest);
+
+                url = api.getFoodItem(mainFoodID);
 
                 JsonObjectRequest jsonRequest2 = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
@@ -134,7 +138,7 @@ public class MainActivity extends AppCompatActivity {
 
                         try {
                             JSONObject nutrition = response.getJSONObject("servings").getJSONObject("serving");
-                            String allNutrition = "Food Name: " + mainFoodName + '\n';
+                            allNutrition = "Food Name: " + mainFoodID + '\n';
                             Iterator<String> keys = nutrition.keys();
                             StringBuilder nutritionText = new StringBuilder();
                             nutritionText.append(allNutrition);
@@ -159,24 +163,23 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
                 // Add the request to the RequestQueue.
-                queue.add(jsonRequest);
                 queue.add(jsonRequest2);
-
+                //displayResults.setText(allNutrition);
 
                 // this runs a thread so there's no lag on updating UI
-//                runOnUiThread(
-//                        new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                // setting it to a proper percentage for display
-//                                String confidence = String.format(Locale.ENGLISH, "%f%%", results.get(0).getConfidence() * 100);
-//                                // set it with our classification results with a formatted string inside res/values/strings.xml
-//                                displayResults.setText(getString(R.string.item_guess, results.get(0).getTitle(), confidence));
-//                                // create new textViews and set text for the information from api call.
-//                            }
-//                        }
-//                );
-//
+                runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                // setting it to a proper percentage for display
+                                //String confidence = String.format(Locale.ENGLISH, "%f%%", results.get(0).getConfidence() * 100);
+                                // set it with our classification results with a formatted string inside res/values/strings.xml
+                                displayResults.setText(allNutrition);
+                                // create new textViews and set text for the information from api call.
+                            }
+                        }
+                );
+
             }
         }
     }
