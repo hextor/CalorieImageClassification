@@ -1,3 +1,5 @@
+package com.example.monique.camera;
+
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -14,10 +16,6 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.example.monique.camera.Classifier;
-import com.example.monique.camera.ClassifierQuantizedMobileNet;
-import com.example.monique.camera.GenerateAPI;
-import com.example.monique.camera.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,7 +25,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-package com.example.monique.camera;
 
 public class MainActivity extends AppCompatActivity {
 
