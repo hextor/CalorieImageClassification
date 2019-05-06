@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                 try{
                     Bitmap imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageFileUri);
                     mimageView.setImageBitmap(imageBitmap);
-                    final List<Classifier.Recognition> results = classifier.recognizeImage(imageBitmap.createScaledBitmap(imageBitmap, 220, 220, false));
+                    final List<Classifier.Recognition> results = classifier.recognizeImage(imageBitmap.createScaledBitmap(imageBitmap, 224, 224, false));
                     predictionView.setText(results.toString());
                     url = api.searchFoodItem(results.get(0).getTitle());
                 }
