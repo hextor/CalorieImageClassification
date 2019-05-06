@@ -1,5 +1,6 @@
 package com.example.monique.camera;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -25,11 +26,11 @@ import java.util.List;
 import java.util.Map;
 
 
-public class MainActivity extends AppCompatActivity {
+
+public class MainActivity extends AppCompatActivity implements VolleyListener{
 
     private ImageView mimageView;
     private static final int REQUEST_IMAGE_CAPTURE= 101;
-    private Runnable recognizer;
     private Classifier classifier;
     private String mainFoodName = "";
     private String mainFoodID = "";
@@ -72,42 +73,36 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+
     public void capture(View view) {
         Intent imageTakeIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
         if (imageTakeIntent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(imageTakeIntent, REQUEST_IMAGE_CAPTURE);
         }
     }
 
+
+    public String url;
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         {
+            super.onActivityResult(requestCode, resultCode, data);
             // After image is taken, it will fall into this statement if successful
-            if(requestCode==REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+            if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
                 Bundle extras = data.getExtras();
                 final Bitmap imageBitmap = (Bitmap) extras.get("data");
                 mimageView.setImageBitmap(imageBitmap);
 
                 final List<Classifier.Recognition> results = classifier.recognizeImage(imageBitmap);
-                final TextView displayResults = findViewById(R.id.calorieTextView);
                 final TextView foodIDView = findViewById(R.id.foodIdView);
                 final TextView saveFoodID = findViewById(R.id.foodID);
                 // run in debug mode and hover over this line to see data details.
                 Log.d("Results for image", results.toString());  // GET THE FIRST KEYWORD -- results.get(0).getTitle()
 
-                GenerateAPI api = new GenerateAPI();
-                // Instantiate the RequestQueue.
                 RequestQueue queue = Volley.newRequestQueue(this);
-                // Request a json response from the provided URL.
-//                String url = api.generateSignature();
+                GenerateAPI api = new GenerateAPI();
 
-                String url;
-//                int count = 0;
-//                do{
-                    url = api.searchFoodItem(results.get(0).getTitle());
-//                    count++;
-//                }while(url.contains("%2B") && count < 3);
+                url = api.searchFoodItem(results.get(0).getTitle());
                 Log.d("API URL", url);
                 JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
@@ -118,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
                                                 JSONObject res = new JSONObject(response.getJSONObject("foods").getJSONArray("food").get(0).toString());
                                                 saveFoodID.setText(res.getString("food_id"));
                                                 foodIDView.setText(getString(R.string.food_display, res.getString("food_name"), res.getString("food_id")));
+                                                requestFinished(true);
                                             }
                                             catch (Exception e){}
                                     }
@@ -130,53 +126,42 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
                 queue.add(jsonRequest);
-
-                    url = api.getFoodItem(saveFoodID.getText().toString());
-
-                JsonObjectRequest jsonRequest2 = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        // if all good you can set the values to a variable or just display the results directly.
-                        Log.d("Response from FatSecret", response.toString());
-//                        displayResults.setText(response.toString());
-                        try {
-                            Log.d("Response", response.getJSONObject("food").getJSONObject("servings").toString());
-                              JSONObject res = new JSONObject(response.getJSONObject("food").getJSONObject("servings").getJSONArray("serving").get(0).toString());
-//                            getString(R.string.food_results, res.getString("calories")
-                              displayResults.setText(getString(R.string.food_results, res.getString("calories")));
-//                            JSONObject nutrition = response.getJSONObject("servings").getJSONObject("serving");
-//                            String allNutrition = "Food Name: " + mainFoodName + '\n';
-//                            Iterator<String> keys = nutrition.keys();
-//                            StringBuilder nutritionText = new StringBuilder();
-//                            nutritionText.append(allNutrition);
-//                            while (keys.hasNext()) {
-//                                Object key = keys.next();
-//                                JSONObject value = nutrition.getJSONObject((String) key);
-//                                nutritionText.append(foodVariables.get(key));
-//                                nutritionText.append(value.toString());
-//                                nutritionText.append('\n');
-//                            }
-//                            allNutrition = nutritionText.toString();
-//                            displayResults.setText(allNutrition);
-                            //String allNutrition now has the text all set up to be displayed (theoretically)
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.d("Error on Volley response", error.toString());
-                    }
-                });
-                // Add the request to the RequestQueue.
-//                queue.add(jsonRequest);
-                Log.d("Error", saveFoodID.getText().toString());
-                Log.d("Error", url);
-
-                queue.add(jsonRequest2);
-                // this runs a thread so there's no lag on updating UI
             }
+        }
+    }
+
+    @Override
+    public void requestFinished(boolean done) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+        GenerateAPI api = new GenerateAPI();
+        if (done) {
+            final TextView saveFoodID = findViewById(R.id.foodID);
+            Log.d("error", saveFoodID.getText().toString());
+            final TextView displayResults = findViewById(R.id.calorieTextView);
+            url = api.getFoodItem(saveFoodID.getText().toString());
+            JsonObjectRequest jsonRequest2 = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    Log.d("Response from FatSecret", response.toString());
+                    try {
+                        Log.d("Response", response.getJSONObject("food").getJSONObject("servings").toString());
+                        JSONObject res = new JSONObject(response.getJSONObject("food").getJSONObject("servings").getJSONArray("serving").get(0).toString());
+                        displayResults.setText(getString(R.string.food_results, res.getString("calories")));
+//
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.d("Error on Volley response", error.toString());
+                }
+            });
+            Log.d("Error", saveFoodID.getText().toString());
+            Log.d("Error", url);
+            queue.add(jsonRequest2);
+
         }
     }
 }
