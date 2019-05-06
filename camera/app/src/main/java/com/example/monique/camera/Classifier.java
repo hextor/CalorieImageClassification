@@ -146,7 +146,7 @@ public abstract class Classifier {
     /** Initializes a {@code Classifier}. */
     Classifier(Activity activity) throws IOException {
         tfliteModel = loadModelFile(activity);
-        tflite = new Interpreter(tfliteModel, tfliteOptions);
+        tflite = new Interpreter(tfliteModel.load(), tfliteOptions);
         labels = loadLabelList(activity);
         imgData =
                 ByteBuffer.allocateDirect(
