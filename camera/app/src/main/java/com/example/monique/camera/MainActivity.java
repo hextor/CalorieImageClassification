@@ -33,6 +33,9 @@ public class MainActivity extends AppCompatActivity {
     private Runnable recognizer;
     private Classifier classifier;
     private String mainFoodName = "";
+    private String mainFoodID = "";
+    private String allNutrition = "";
+
     private Map<String, String> foodVariables = new HashMap<String, String>() {
         {
             put("measurement_description", "Measurement Description: ");
@@ -100,7 +103,8 @@ public class MainActivity extends AppCompatActivity {
                 // Instantiate the RequestQueue.
                 RequestQueue queue = Volley.newRequestQueue(this);
                 // Request a json response from the provided URL.
-                String url = api.generateSignature();
+//                String url = api.generateSignature();
+                String url = api.searchFoodItem(results.get(0).getTitle());
                 Log.d("API URL", url);
                 JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
@@ -110,7 +114,8 @@ public class MainActivity extends AppCompatActivity {
                         displayResults.setText(response.toString());
 
                         try {
-                            mainFoodName = response.getJSONArray("foods").getJSONObject(0).getString("food_name");
+//                            mainFoodName = response.getJSONArray("foods").getJSONObject(0).getString("food_name");
+                              mainFoodID = response.getJSONArray("foods").getJSONObject(0).getString("food_id");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -123,7 +128,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-                url = api.searchFoodItem(mainFoodName);
+                queue.add(jsonRequest);
+                url = api.searchFoodItem(mainFoodID);
 
                 JsonObjectRequest jsonRequest2 = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
@@ -159,22 +165,23 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
                 // Add the request to the RequestQueue.
-                queue.add(jsonRequest);
+//                queue.add(jsonRequest);
                 queue.add(jsonRequest2);
                 // this runs a thread so there's no lag on updating UI
-//                runOnUiThread(
-//                        new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                // setting it to a proper percentage for display
+                runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                // setting it to a proper percentage for display
 //                                String confidence = String.format(Locale.ENGLISH, "%f%%", results.get(0).getConfidence() * 100);
-//                                // set it with our classification results with a formatted string inside res/values/strings.xml
+                                // set it with our classification results with a formatted string inside res/values/strings.xml
 //                                displayResults.setText(getString(R.string.item_guess, results.get(0).getTitle(), confidence));
-//                                // create new textViews and set text for the information from api call.
-//                            }
-//                        }
-//                );
-//
+                                // create new textViews and set text for the information from api call.
+                                displayResults.setText(allNutrition);
+                            }
+                        }
+                );
+
             }
         }
     }
