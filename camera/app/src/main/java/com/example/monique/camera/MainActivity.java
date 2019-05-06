@@ -1,10 +1,17 @@
 package com.example.monique.camera;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -21,9 +28,8 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
+import java.io.File;
 import java.util.List;
-import java.util.Map;
 
 
 
@@ -32,78 +38,88 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
     private ImageView mimageView;
     private static final int REQUEST_IMAGE_CAPTURE= 101;
     private Classifier classifier;
-    private String mainFoodName = "";
-    private String mainFoodID = "";
-    private String allNutrition = "";
 
-    private Map<String, String> foodVariables = new HashMap<String, String>() {
-        {
-            put("measurement_description", "Measurement Description: ");
-            put("calories", "Calories: ");
-            put("carbohydrate", "Carbs: ");
-            put("protein", "Protein: ");
-            put("fat", "Fat: ");
-            put("saturated_fat", "Saturated Fat: ");
-            put("polyunsaturated_fat", "Polyunsaturated Fat: ");
-            put("monounsaturated_fat", "Monounsaturated Fat: ");
-            put("trans_fat", "Trans Fat: ");
-            put("cholesterol", "Cholesterol: ");
-            put("potassium", "Potassium: ");
-            put("sodium", "Sodium: ");
-            put("fiber", "Fiber: ");
-            put("sugar", "Sugar: ");
-            put("vitamin_a", "Vitamin A: ");
-            put("vitamin_c", "Vitamin C: ");
-            put("calcium", "Calcium: ");
-            put("iron", "Iron: ");
-        }
+    public String[] permissions = {
+        Manifest.permission.CAMERA,
+        Manifest.permission.INTERNET,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE
     };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        mimageView=findViewById(R.id.imageView);
-        try{
-            classifier = new ClassifierQuantizedMobileNet(this);
+
+        for(int i = 0; i < permissions.length-1; i++){
+            if (ContextCompat.checkSelfPermission(this, permissions[i])
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Permission is not granted
+
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        permissions[i])) {
+
+                } else {
+                    // No explanation needed; request the permission
+                    ActivityCompat.requestPermissions(this,
+                            permissions, REQUEST_IMAGE_CAPTURE);
+                }
+            }
         }
-        catch (Exception e){
+        setContentView(R.layout.activity_main);
+        mimageView = findViewById(R.id.imageView);
+        try {
+            classifier = new ClassifierQuantizedMobileNet(this);
+        } catch (Exception e) {
             Log.d("Error on classifier initialization", e.toString());
         }
 
     }
 
-
+    public String imageFilePath;
+    public Uri imageFileUri;
     public void capture(View view) {
         Intent imageTakeIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+
+
+        imageFilePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/calorieclassification.jpg";
+        File imageFile = new File(imageFilePath);
+        imageFileUri = FileProvider.getUriForFile(this, "com.example.monique.provider", imageFile); // convert path to Uri
+        imageTakeIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageFileUri);
+
         if (imageTakeIntent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(imageTakeIntent, REQUEST_IMAGE_CAPTURE);
         }
     }
 
 
-    public String url;
+    public String url = "";
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         {
             super.onActivityResult(requestCode, resultCode, data);
+
+            final TextView foodIDView = findViewById(R.id.foodIdView);
+            final TextView saveFoodID = findViewById(R.id.foodID);
+
+            RequestQueue queue = Volley.newRequestQueue(this);
+            GenerateAPI api = new GenerateAPI();
             // After image is taken, it will fall into this statement if successful
             if(requestCode == REQUEST_IMAGE_CAPTURE && resultCode == Activity.RESULT_OK) {
-                Bundle extras = data.getExtras();
-                final Bitmap imageBitmap = (Bitmap) extras.get("data");
-                mimageView.setImageBitmap(imageBitmap);
+//                Bundle extras = data.getExtras();
+//                final Bitmap imageBitmap = (Bitmap) extras.get("data");
+//                BitmapFactory.Options bmpFactoryOptions = new BitmapFactory.Options();
+//                bmpFactoryOptions.inJustDecodeBounds = false;
+                try{
+                    Bitmap imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageFileUri);
+                    mimageView.setImageBitmap(imageBitmap);
+                    final List<Classifier.Recognition> results = classifier.recognizeImage(imageBitmap.createScaledBitmap(imageBitmap, 220, 220, false));
+                    url = api.searchFoodItem(results.get(0).getTitle());
+                }
+                catch (Exception e){
+                    Log.d("ERROR", e.toString());
+                }
 
-                final List<Classifier.Recognition> results = classifier.recognizeImage(imageBitmap);
-                final TextView foodIDView = findViewById(R.id.foodIdView);
-                final TextView saveFoodID = findViewById(R.id.foodID);
-                // run in debug mode and hover over this line to see data details.
-                Log.d("Results for image", results.toString());  // GET THE FIRST KEYWORD -- results.get(0).getTitle()
 
-                RequestQueue queue = Volley.newRequestQueue(this);
-                GenerateAPI api = new GenerateAPI();
-
-                url = api.searchFoodItem(results.get(0).getTitle());
-                Log.d("API URL", url);
+//                Log.d("API URL", url);
                 JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(final JSONObject response) {
@@ -156,6 +172,7 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d("Error on Volley response", error.toString());
+                    displayResults.setText("invalid url" + url);
                 }
             });
             Log.d("Error", saveFoodID.getText().toString());

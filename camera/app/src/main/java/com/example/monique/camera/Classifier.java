@@ -188,6 +188,7 @@ public abstract class Classifier {
             return;
         }
         imgData.rewind();
+        Log.d("ERROR", bitmap.toString());
         bitmap.getPixels(intValues, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
         // Convert the image to floating point.
         int pixel = 0;
