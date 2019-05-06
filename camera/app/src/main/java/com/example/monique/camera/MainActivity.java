@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
 
             final TextView foodIDView = findViewById(R.id.foodIdView);
             final TextView saveFoodID = findViewById(R.id.foodID);
-
+            final TextView predictionView = findViewById(R.id.predictionView);
             RequestQueue queue = Volley.newRequestQueue(this);
             GenerateAPI api = new GenerateAPI();
             // After image is taken, it will fall into this statement if successful
@@ -112,6 +112,7 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                     Bitmap imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageFileUri);
                     mimageView.setImageBitmap(imageBitmap);
                     final List<Classifier.Recognition> results = classifier.recognizeImage(imageBitmap.createScaledBitmap(imageBitmap, 220, 220, false));
+                    predictionView.setText(results.toString());
                     url = api.searchFoodItem(results.get(0).getTitle());
                 }
                 catch (Exception e){
@@ -161,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                     Log.d("Response from FatSecret", response.toString());
                     try {
                         Log.d("Response", response.getJSONObject("food").getJSONObject("servings").toString());
-                        JSONObject res = new JSONObject(response.getJSONObject("food").getJSONObject("servings").getJSONArray("serving").get(0).toString());
+                        JSONObject res = new JSONObject(response.getJSONObject("food").getJSONObject("servings").getJSONObject("serving").toString());
                         displayResults.setText(getString(R.string.food_results, res.getString("calories")));
 //
                     } catch (JSONException e) {
@@ -172,7 +173,6 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                 @Override
                 public void onErrorResponse(VolleyError error) {
                     Log.d("Error on Volley response", error.toString());
-                    displayResults.setText("invalid url" + url);
                 }
             });
             Log.d("Error", saveFoodID.getText().toString());

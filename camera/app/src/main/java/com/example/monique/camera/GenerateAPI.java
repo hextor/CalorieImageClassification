@@ -105,7 +105,7 @@ public class GenerateAPI {
 
     // now we construct a url for searching for food item by search term
     public String searchFoodItem(String searchTerm){
-        this.timestamp = generateTimestamp();
+        String sig = "";
         this.searchExpression = encodeString(searchTerm);
         this.method = "foods.search";
         StringBuilder sb = new StringBuilder();
@@ -113,9 +113,13 @@ public class GenerateAPI {
         sb.append(String.format("format=%s&", this.format));
         sb.append(String.format("method=%s&", this.method));
         sb.append(String.format("oauth_consumer_key=%s&", this.consumer_key));
+        do {
+            this.timestamp = generateTimestamp();
+            sig = this.generateSignature();
+        } while(sig.contains("%2B"));
         sb.append(String.format("oauth_nonce=%s&", this.timestamp + "okay"));
-        sb.append(String.format("oauth_signature=%s&", this.generateSignature()));
-        sb.append(String.format("oauth_signature_method=HMAC-SHA1&"));
+        sb.append(String.format("oauth_signature=%s&", sig));
+        sb.append("oauth_signature_method=HMAC-SHA1&");
         sb.append(String.format("oauth_timestamp=%s&", this.timestamp));
         sb.append(String.format("oauth_version=%s&", this.version));
         sb.append(String.format("search_expression=%s", this.searchExpression)); // encode search term in-case there are spaces
@@ -125,7 +129,7 @@ public class GenerateAPI {
 
     public String getFoodItem(String foodId){
         StringBuilder sb = new StringBuilder();
-        this.timestamp = generateTimestamp();
+        String sig = "";
         this.method = "food.get";
         this.food_id = foodId;
         sb.append(String.format("%s?", this.request_url));
@@ -133,9 +137,13 @@ public class GenerateAPI {
         sb.append(String.format("format=%s&", this.format));
         sb.append(String.format("method=%s&", this.method));
         sb.append(String.format("oauth_consumer_key=%s&", this.consumer_key));
+        do {
+            this.timestamp = generateTimestamp();
+            sig = this.generateSignature();
+        } while(sig.contains("%2B"));
         sb.append(String.format("oauth_nonce=%s&", this.timestamp + "okay"));
-        sb.append(String.format("oauth_signature=%s&", this.generateSignature()));
-        sb.append(String.format("oauth_signature_method=HMAC-SHA1&"));
+        sb.append(String.format("oauth_signature=%s&", sig));
+        sb.append("oauth_signature_method=HMAC-SHA1&");
         sb.append(String.format("oauth_timestamp=%s&", this.timestamp));
         sb.append(String.format("oauth_version=%s", this.version));
 
