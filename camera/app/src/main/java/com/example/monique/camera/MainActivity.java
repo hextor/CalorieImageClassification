@@ -1,5 +1,3 @@
-package com.example.monique.camera;
-
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -16,10 +14,20 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.example.monique.camera.Classifier;
+import com.example.monique.camera.ClassifierQuantizedMobileNet;
+import com.example.monique.camera.GenerateAPI;
+import com.example.monique.camera.R;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+package com.example.monique.camera;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +35,29 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_CAPTURE= 101;
     private Runnable recognizer;
     private Classifier classifier;
+    private String mainFoodName = "";
+    private Map<String, String> foodVariables = new HashMap<String, String>() {
+        {
+            put("measurement_description", "Measurement Description: ");
+            put("calories", "Calories: ");
+            put("carbohydrate", "Carbs: ");
+            put("protein", "Protein: ");
+            put("fat", "Fat: ");
+            put("saturated_fat", "Saturated Fat: ");
+            put("polyunsaturated_fat", "Polyunsaturated Fat: ");
+            put("monounsaturated_fat", "Monounsaturated Fat: ");
+            put("trans_fat", "Trans Fat: ");
+            put("cholesterol", "Cholesterol: ");
+            put("potassium", "Potassium: ");
+            put("sodium", "Sodium: ");
+            put("fiber", "Fiber: ");
+            put("sugar", "Sugar: ");
+            put("vitamin_a", "Vitamin A: ");
+            put("vitamin_c", "Vitamin C: ");
+            put("calcium", "Calcium: ");
+            put("iron", "Iron: ");
+        }
+    };
     // Used to load the 'native-lib' library on application startup.
     static {
         System.loadLibrary("native-lib");
@@ -69,43 +100,23 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("Results for image", results.toString());  // GET THE FIRST KEYWORD -- results.get(0).getTitle()
 
                 GenerateAPI api = new GenerateAPI();
-
                 // Instantiate the RequestQueue.
                 RequestQueue queue = Volley.newRequestQueue(this);
-
-                // Examples of how to use the api fields.
-                // Need to create the urls to be used in the JsonObjectRequest functions
                 // Request a json response from the provided URL.
-                String url = api.searchFoodItem("apple");
-                // This ID is for apple.
-                String descriptionUrl = api.getFoodItem("35718");
-
-
+                String url = api.generateSignature();
                 Log.d("API URL", url);
                 JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         // if all good you can set the values to a variable or just display the results directly.
                         Log.d("Response from FatSecret", response.toString());
-//                        displayResults.setText(response.toString());
-
-                    }
-                    }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // Handle a generic error with a generic response
-                        Log.d("Error on Volley response", error.toString());
-                    }
-                });
-                queue.add(jsonRequest);
-
-                JsonObjectRequest jsonRequest2 = new JsonObjectRequest(Request.Method.GET, descriptionUrl, null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        // if all good you can set the values to a variable or just display the results directly.
-                        Log.d("Response from FatSecret", response.toString());
                         displayResults.setText(response.toString());
 
+                        try {
+                            mainFoodName = response.getJSONArray("foods").getJSONObject(0).getString("food_name");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }, new Response.ErrorListener() {
                     @Override
@@ -115,10 +126,44 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
+                url = api.searchFoodItem(mainFoodName);
+
+                JsonObjectRequest jsonRequest2 = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        // if all good you can set the values to a variable or just display the results directly.
+                        Log.d("Response from FatSecret", response.toString());
+                        displayResults.setText(response.toString());
+
+                        try {
+                            JSONObject nutrition = response.getJSONObject("servings").getJSONObject("serving");
+                            String allNutrition = "Food Name: " + mainFoodName + '\n';
+                            Iterator<String> keys = nutrition.keys();
+                            StringBuilder nutritionText = new StringBuilder();
+                            nutritionText.append(allNutrition);
+                            while (keys.hasNext()) {
+                                Object key = keys.next();
+                                JSONObject value = nutrition.getJSONObject((String) key);
+                                nutritionText.append(foodVariables.get(key));
+                                nutritionText.append(value.toString());
+                                nutritionText.append('\n');
+                            }
+                            allNutrition = nutritionText.toString();
+                            //String allNutrition now has the text all set up to be displayed (theoretically)
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // Handle a generic error with a generic response
+                        Log.d("Error on Volley response", error.toString());
+                    }
+                });
                 // Add the request to the RequestQueue.
+                queue.add(jsonRequest);
                 queue.add(jsonRequest2);
-
-
                 // this runs a thread so there's no lag on updating UI
 //                runOnUiThread(
 //                        new Runnable() {
