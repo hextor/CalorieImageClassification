@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                             JSONObject res = new JSONObject(response.getJSONObject("foods").getJSONArray("food").get(0).toString());
                             saveFoodID.setText(res.getString("food_id"));
                             mainFoodName = res.getString("food_name");
-                            foodIDView.setText(getString(R.string.food_display, res.getString("food_name"), res.getString("food_id")));
+                            foodIDView.setText(mainFoodName);
                             requestFinished(true);
                         }
                         catch (Exception e){}
