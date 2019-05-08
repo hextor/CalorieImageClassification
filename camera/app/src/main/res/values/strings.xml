@@ -1,4 +1,6 @@
 <resources>
-    <string name="app_name">camera</string>
+    <string name="app_name">CalorieClassification</string>
     <string name="item_guess">This looks like a %1$s, but I\'m only %2$s confident.</string>
+    <string name="food_display">Food Name: %1$s, Food ID: %2$s</string>
+    <string name="food_results">Calorie Count: %1$s</string>
 </resources>

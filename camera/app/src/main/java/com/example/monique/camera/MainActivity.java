@@ -111,15 +111,15 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                     public void onResponse(final JSONObject response) {
                         // if all good you can set the values to a variable or just display the results directly.
                         Log.d("Response from FatSecret", response.toString());
-                        try{
-                            JSONObject res = new JSONObject(response.getJSONObject("foods").getJSONArray("food").get(0).toString());
-                            saveFoodID.setText(res.getString("food_id"));
-                            mainFoodName = res.getString("food_name");
-                            foodIDView.setText(mainFoodName);
-                            requestFinished(true);
-                        }
-                        catch (Exception e){}
-                    }
+                                            try{
+                                                JSONObject res = new JSONObject(response.getJSONObject("foods").getJSONArray("food").get(0).toString());
+                                                saveFoodID.setText(res.getString("food_id"));
+                                                mainFoodName = res.getString("food_name");
+                                                foodIDView.setText(getString(R.string.food_display, res.getString("food_name"), res.getString("food_id")));
+                                                requestFinished(true);
+                                            }
+                                            catch (Exception e){}
+                                    }
                 }, new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
