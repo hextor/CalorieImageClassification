@@ -25,6 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.Iterator;
+
 
 
 public class MainActivity extends AppCompatActivity implements VolleyListener{
@@ -101,8 +103,8 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
 
                 RequestQueue queue = Volley.newRequestQueue(this);
                 GenerateAPI api = new GenerateAPI();
-
-                url = api.searchFoodItem(results.get(0).getTitle());
+                url = api.searchFoodItem( results.get(0).getTitle());
+                //url = api.searchFoodItem("apple"); // this handles what the result is (results.get(0).getTitle())
                 Log.d("API URL", url);
                 JsonObjectRequest jsonRequest = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                     @Override
@@ -112,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                                             try{
                                                 JSONObject res = new JSONObject(response.getJSONObject("foods").getJSONArray("food").get(0).toString());
                                                 saveFoodID.setText(res.getString("food_id"));
+                                                mainFoodName = res.getString("food_name");
                                                 foodIDView.setText(getString(R.string.food_display, res.getString("food_name"), res.getString("food_id")));
                                                 requestFinished(true);
                                             }
@@ -143,12 +146,35 @@ public class MainActivity extends AppCompatActivity implements VolleyListener{
                 @Override
                 public void onResponse(JSONObject response) {
                     Log.d("Response from FatSecret", response.toString());
-                    try {
+                    /*try {
                         Log.d("Response", response.getJSONObject("food").getJSONObject("servings").toString());
                         JSONObject res = new JSONObject(response.getJSONObject("food").getJSONObject("servings").getJSONArray("serving").get(0).toString());
                         displayResults.setText(getString(R.string.food_results, res.getString("calories")));
 //
-                    } catch (JSONException e) {
+                    }*/
+
+
+                    try {
+                        JSONObject nutrition = new JSONObject(response.getJSONObject("food").getJSONObject("servings").getJSONArray("serving").get(0).toString());
+                        allNutrition = "Food Name: " + mainFoodName + '\n';
+                        Iterator<String> keys = nutrition.keys();
+                        StringBuilder nutritionText = new StringBuilder();
+                        nutritionText.append(allNutrition);
+                        while (keys.hasNext()) {
+                            Object key = keys.next();
+                            // if it finds the key in the map named foodVariables to see if the keys are still left/null
+                            if (foodVariables.containsKey((String) key)) {
+                                //JSONObject value = new JSONObject(nutrition.getJSONObject((String) key).toString());
+                                nutritionText.append(foodVariables.get(key));
+                                nutritionText.append(nutrition.getString((String) key));
+
+                                nutritionText.append('\n');
+                            }
+                        }
+                        allNutrition = nutritionText.toString();
+                        displayResults.setText(allNutrition);
+                        //String allNutrition now has the text all set up to be displayed (theoretically)
+                    }catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
