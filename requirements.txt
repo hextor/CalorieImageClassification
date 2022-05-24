@@ -44,7 +44,7 @@ tb-nightly==1.14.0a20190413
 tcod==8.0.0
 tdl==6.0.0
 tensorboard==1.7.0
-tensorflow==1.13.1
+tensorflow==2.6.4
 tensorflow-estimator==1.13.0
 tensorflow-hub==0.4.0
 termcolor==1.1.0
